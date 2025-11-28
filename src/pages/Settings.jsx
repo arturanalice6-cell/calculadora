@@ -16,7 +16,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Switch } from "@/components/ui/Switch";
+import { Switch } from "@/components/ui/Switch"; // ✅ CORRIGIDO
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/AlertDialog";
+} from "@/components/ui/AlertDialog"; // ✅ CORRIGIDO
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function Settings() {
