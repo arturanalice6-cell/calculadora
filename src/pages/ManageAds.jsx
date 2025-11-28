@@ -4,12 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Eye, MousePointer, AlertCircle, CheckCircle, Clock, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 
 const SEGMENTS = ["Academia", "Suplementos", "Roupas", "Equipamentos", "Serviços", "Nutrição"];
 
@@ -57,6 +57,7 @@ export default function ManageAds() {
         }
       } catch (error) {
         console.log("User not logged in");
+        navigate(createPageUrl("Home"));
       }
     };
     getUser();
@@ -93,10 +94,14 @@ export default function ManageAds() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['myAds']);
+      queryClient.invalidateQueries({ queryKey: ['myAds'] });
       setShowCreateForm(false);
       resetForm();
       alert("Anúncio enviado para aprovação! Nossa equipe irá revisar em até 48 horas.");
+    },
+    onError: (error) => {
+      console.error("Error creating ad:", error);
+      alert("Erro ao criar anúncio. Tente novamente.");
     }
   });
 
@@ -160,11 +165,11 @@ export default function ManageAds() {
 
   const getStatusBadge = (ad) => {
     if (ad.approval_status === 'approved' && ad.verified) {
-      return <Badge className="bg-green-100 text-green-700">✓ Aprovado</Badge>;
+      return <Badge className="bg-green-100 text-green-700 border-green-200">✓ Aprovado</Badge>;
     } else if (ad.approval_status === 'rejected') {
-      return <Badge className="bg-red-100 text-red-700">✗ Rejeitado</Badge>;
+      return <Badge className="bg-red-100 text-red-700 border-red-200">✗ Rejeitado</Badge>;
     } else {
-      return <Badge className="bg-yellow-100 text-yellow-700">⏳ Aguardando Aprovação</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">⏳ Aguardando Aprovação</Badge>;
     }
   };
 
@@ -192,7 +197,8 @@ export default function ManageAds() {
           </div>
           <Button
             onClick={() => setShowCreateForm(true)}
-            className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+            className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
+            disabled={!businessProfile?.verified}
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Anúncio
@@ -201,6 +207,24 @@ export default function ManageAds() {
       </header>
 
       <div className="p-4 pb-24">
+        {!businessProfile?.verified && (
+          <Card className="mb-4 border-yellow-200 bg-yellow-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">
+                    Perfil não verificado
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    Seu perfil comercial precisa ser verificado antes de criar anúncios.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {showCreateForm ? (
           <Card>
             <CardHeader>
@@ -237,7 +261,7 @@ export default function ManageAds() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Segmento *
                   </label>
-                  <Select value={segment} onValueChange={setSegment}>
+                  <Select value={segment} onValueChange={setSegment} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um segmento" />
                     </SelectTrigger>
@@ -278,7 +302,7 @@ export default function ManageAds() {
                           type="file"
                           accept="image/*"
                           onChange={(e) => {
-                            const file = e.target.files[0];
+                            const file = e.target.files?.[0];
                             if (file) handleImageUpload(file);
                           }}
                           className="hidden"
@@ -288,9 +312,19 @@ export default function ManageAds() {
                           variant="outline"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploading}
+                          className="w-full"
                         >
-                          <Upload className="w-4 h-4 mr-2" />
-                          {isUploading ? "Enviando..." : "Selecionar Imagem"}
+                          {isUploading ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+                              Enviando...
+                            </div>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Selecionar Imagem
+                            </>
+                          )}
                         </Button>
                       </div>
                     )}
@@ -348,10 +382,17 @@ export default function ManageAds() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createAdMutation.isPending}
-                    className="flex-1 bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+                    disabled={createAdMutation.isPending || !businessProfile?.verified}
+                    className="flex-1 bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] disabled:opacity-50"
                   >
-                    {createAdMutation.isPending ? "Enviando..." : "Enviar para Aprovação"}
+                    {createAdMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Enviando...
+                      </div>
+                    ) : (
+                      "Enviar para Aprovação"
+                    )}
                   </Button>
                 </div>
               </form>
@@ -371,7 +412,8 @@ export default function ManageAds() {
                   </p>
                   <Button
                     onClick={() => setShowCreateForm(true)}
-                    className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+                    className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
+                    disabled={!businessProfile?.verified}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Criar Primeiro Anúncio
@@ -380,31 +422,40 @@ export default function ManageAds() {
               </Card>
             ) : (
               ads.map((ad) => (
-                <Card key={ad.id}>
+                <Card key={ad.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                       <img
                         src={ad.image_url}
                         alt={ad.title}
-                        className="w-20 h-20 rounded-lg object-cover"
+                        className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
                       />
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{ad.title}</h3>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 truncate">{ad.title}</h3>
                             <p className="text-sm text-gray-600">{ad.segment}</p>
                           </div>
-                          {getStatusBadge(ad)}
+                          <div className="flex-shrink-0 ml-2">
+                            {getStatusBadge(ad)}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-700 mb-2 line-clamp-2">
                           {ad.description}
                         </p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>👁️ {ad.views || 0} visualizações</span>
-                          <span>👆 {ad.clicks || 0} cliques</span>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {ad.views || 0} visualizações
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MousePointer className="w-3 h-3" />
+                            {ad.clicks || 0} cliques
+                          </span>
                           {ad.submitted_at && (
-                            <span>
-                              📅 {new Date(ad.submitted_at).toLocaleDateString('pt-BR')}
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(ad.submitted_at).toLocaleDateString('pt-BR')}
                             </span>
                           )}
                         </div>
