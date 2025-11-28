@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, MessageCircle, UserPlus, Bell, Check, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -75,13 +75,15 @@ export default function Notifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
       const unreadNotifs = notifications.filter(n => !n.read);
+      if (unreadNotifs.length === 0) return;
+      
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
@@ -89,7 +91,10 @@ export default function Notifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: (error) => {
+      console.error("Error marking all as read:", error);
     }
   });
 
@@ -102,12 +107,14 @@ export default function Notifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
 
   const followBackMutation = useMutation({
     mutationFn: async (notification) => {
+      if (!currentUser?.email) throw new Error("User not authenticated");
+
       const { error: followError } = await supabase
         .from('follows')
         .insert({
@@ -116,17 +123,19 @@ export default function Notifications() {
         });
       if (followError) throw followError;
 
+      // Create notification for the user being followed back
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
           user_email: notification.from_user_email,
           type: "follow",
-          from_user_name: currentUser.user_metadata?.full_name,
+          from_user_name: currentUser.user_metadata?.full_name || "Usuário",
           from_user_email: currentUser.email,
-          text: "começou a te seguir"
+          text: "começou a te seguir de volta"
         });
       if (notificationError) throw notificationError;
 
+      // Mark original notification as read
       const { error: updateError } = await supabase
         .from('notifications')
         .update({ read: true })
@@ -134,8 +143,11 @@ export default function Notifications() {
       if (updateError) throw updateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['myFollows']);
-      queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries({ queryKey: ['myFollows'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: (error) => {
+      console.error("Error following back:", error);
     }
   });
 
@@ -185,7 +197,7 @@ export default function Notifications() {
               <button
                 onClick={() => markAllAsReadMutation.mutate()}
                 disabled={markAllAsReadMutation.isPending}
-                className="text-sm text-[#FF6B35] font-semibold hover:text-[#FF006E] transition-colors"
+                className="text-sm text-[#FF6B35] font-semibold hover:text-[#FF006E] transition-colors disabled:opacity-50"
               >
                 {markAllAsReadMutation.isPending ? 'Marcando...' : 'Marcar todas como lidas'}
               </button>
@@ -230,18 +242,23 @@ export default function Notifications() {
                 <div
                   key={notification.id}
                   className={`flex items-start gap-3 p-4 rounded-xl transition-all relative group ${
-                    notification.read ? 'bg-white' : 'bg-blue-50 border-l-4 border-[#FF6B35]'
-                  }`}
+                    notification.read ? 'bg-white hover:bg-gray-50' : 'bg-blue-50 border-l-4 border-[#FF6B35] hover:bg-blue-100'
+                  } shadow-sm hover:shadow-md transition-shadow`}
                 >
                   <button
                     onClick={() => deleteNotificationMutation.mutate(notification.id)}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                    disabled={deleteNotificationMutation.isPending}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 disabled:opacity-50"
                   >
-                    <X className="w-4 h-4 text-red-500" />
+                    {deleteNotificationMutation.isPending ? (
+                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <X className="w-4 h-4 text-red-500" />
+                    )}
                   </button>
 
                   <Link
-                    to={`${createPageUrl('UserProfile')}?id=${notifUser?.id}`}
+                    to={`${createPageUrl('UserProfile')}?email=${notification.from_user_email}`}
                     onClick={() => handleNotificationClick(notification)}
                     className="flex-shrink-0"
                   >
@@ -255,7 +272,7 @@ export default function Notifications() {
                       ) : (
                         notification.from_user_name?.[0]?.toUpperCase() || 'U'
                       )}
-                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1">
+                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm">
                         {getNotificationIcon(notification.type)}
                       </div>
                     </div>
@@ -264,11 +281,11 @@ export default function Notifications() {
                   <div className="flex-1 min-w-0 pr-8">
                     <p className="text-gray-900">
                       <Link
-                        to={`${createPageUrl('UserProfile')}?id=${notifUser?.id}`}
+                        to={`${createPageUrl('UserProfile')}?email=${notification.from_user_email}`}
                         onClick={() => handleNotificationClick(notification)}
                         className="font-semibold hover:underline"
                       >
-                        {notification.from_user_name}
+                        {notification.from_user_name || 'Usuário'}
                       </Link>
                       {' '}
                       <span className="text-gray-600">{notification.text}</span>
@@ -292,7 +309,7 @@ export default function Notifications() {
                       size="sm"
                       onClick={() => followBackMutation.mutate(notification)}
                       disabled={followBackMutation.isPending}
-                      className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] text-white hover:shadow-lg flex-shrink-0"
+                      className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] text-white hover:shadow-lg flex-shrink-0 transition-all disabled:opacity-50"
                     >
                       {followBackMutation.isPending ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
