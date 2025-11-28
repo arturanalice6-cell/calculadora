@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, Star, TrendingUp } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -65,8 +65,10 @@ export default function MarketplacePlans() {
                   key={cat}
                   variant={selectedCategory === cat ? "default" : "outline"}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`cursor-pointer whitespace-nowrap ${
-                    selectedCategory === cat ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF006E]' : ''
+                  className={`cursor-pointer whitespace-nowrap transition-all ${
+                    selectedCategory === cat 
+                      ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF006E] text-white border-transparent' 
+                      : 'hover:bg-gray-100'
                   }`}
                 >
                   {cat}
@@ -79,8 +81,10 @@ export default function MarketplacePlans() {
                   key={level}
                   variant={selectedLevel === level ? "default" : "outline"}
                   onClick={() => setSelectedLevel(level)}
-                  className={`cursor-pointer whitespace-nowrap ${
-                    selectedLevel === level ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF006E]' : ''
+                  className={`cursor-pointer whitespace-nowrap transition-all ${
+                    selectedLevel === level 
+                      ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF006E] text-white border-transparent' 
+                      : 'hover:bg-gray-100'
                   }`}
                 >
                   {level}
@@ -100,12 +104,30 @@ export default function MarketplacePlans() {
           <Card>
             <CardContent className="p-12 text-center">
               <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhum plano encontrado</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum plano encontrado</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm || selectedCategory !== "Todos" || selectedLevel !== "Todos" 
+                  ? "Tente ajustar os filtros de busca"
+                  : "Ainda não há planos disponíveis no marketplace"
+                }
+              </p>
+              {(searchTerm || selectedCategory !== "Todos" || selectedLevel !== "Todos") && (
+                <Button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedCategory("Todos");
+                    setSelectedLevel("Todos");
+                  }}
+                  variant="outline"
+                >
+                  Limpar Filtros
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
           filteredPlans.map((plan) => (
-            <Card key={plan.id} className="overflow-hidden">
+            <Card key={plan.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardContent className="p-0">
                 {plan.cover_image && (
                   <img 
@@ -127,10 +149,17 @@ export default function MarketplacePlans() {
                   </div>
 
                   <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <Badge variant="outline">{plan.level}</Badge>
-                    <Badge variant="outline">{plan.category}</Badge>
+                    <Badge variant="outline" className="text-xs">{plan.level}</Badge>
+                    <Badge variant="outline" className="text-xs">{plan.category}</Badge>
                     {plan.includes_nutrition && (
-                      <Badge variant="outline">+ Nutrição</Badge>
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        + Nutrição
+                      </Badge>
+                    )}
+                    {plan.includes_support && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        Suporte
+                      </Badge>
                     )}
                   </div>
 
@@ -138,14 +167,22 @@ export default function MarketplacePlans() {
                     <div>
                       <p className="text-2xl font-bold text-[#FF6B35]">
                         R$ {plan.price_monthly}
-                        <span className="text-sm text-gray-500">/mês</span>
+                        <span className="text-sm text-gray-500 font-normal">/mês</span>
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {plan.subscribers_count} alunos ativos
-                      </p>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Users className="w-3 h-3" />
+                        <span>{plan.subscribers_count || 0} alunos ativos</span>
+                        {plan.rating && (
+                          <>
+                            <span>•</span>
+                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                            <span>{plan.rating.toFixed(1)}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <Link to={`${createPageUrl("PlanDetails")}?planId=${plan.id}`}>
-                      <Button className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]">
+                      <Button className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] transition-all">
                         Ver Plano
                       </Button>
                     </Link>
