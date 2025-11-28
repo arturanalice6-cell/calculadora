@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { supabase } from "@/api/supabaseClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/Button.jsx"; // CORRIGIDO: Maiúsculo e com extensão
-import { Input } from "@/components/ui/Input.jsx"; // CORRIGIDO: Maiúsculo e com extensão
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select.jsx"; // CORRIGIDO: Maiúsculo e com extensão
-import { Textarea } from "@/components/ui/Textarea.jsx"; // CORRIGIDO: Maiúsculo e com extensão
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 
 const FILTERS = ["Normal", "Sépia", "Preto e Branco", "Vintage", "Brilho"];
 
