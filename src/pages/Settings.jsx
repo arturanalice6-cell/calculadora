@@ -15,8 +15,8 @@ import {
   FileText,
   HelpCircle
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/Button";
+import { Switch } from "@/components/ui/Switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,13 +26,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/AlertDialog";
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [privateProfile, setPrivateProfile] = useState(false);
@@ -43,8 +44,18 @@ export default function Settings() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         setCurrentUser(user);
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+          
+          setUserProfile(profile);
+        }
       } catch (error) {
-        console.log("User not logged in");
+        console.log("Error fetching user:", error);
       }
     };
     getUser();
@@ -54,10 +65,10 @@ export default function Settings() {
     try {
       queryClient.clear();
       await supabase.auth.signOut();
-      window.location.href = window.location.origin;
+      navigate(createPageUrl("Home"));
     } catch (error) {
       console.error("Logout error:", error);
-      window.location.href = window.location.origin;
+      navigate(createPageUrl("Home"));
     }
   };
 
@@ -66,7 +77,7 @@ export default function Settings() {
     setShowDeleteDialog(false);
   };
 
-  if (!currentUser) {
+  if (!currentUser || !userProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF6B35] border-t-transparent"></div>
@@ -160,7 +171,7 @@ export default function Settings() {
       <header className="sticky top-0 bg-white border-b border-gray-200 z-40">
         <div className="flex items-center justify-between px-4 py-3">
           <button
-            onClick={() => navigate(createPageUrl("Profile"))}
+            onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X className="w-6 h-6 text-gray-700" />
@@ -171,17 +182,26 @@ export default function Settings() {
       </header>
 
       <div className="p-4 space-y-6 pb-24">
-        <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
+        <div className="bg-white rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
-            {currentUser.user_metadata?.profile_photo ? (
-              <img src={currentUser.user_metadata.profile_photo} alt={currentUser.user_metadata?.full_name || 'User'} className="w-full h-full object-cover" />
+            {userProfile.profile_photo ? (
+              <img 
+                src={userProfile.profile_photo} 
+                alt={userProfile.full_name || 'User'} 
+                className="w-full h-full object-cover" 
+              />
             ) : (
-              currentUser.user_metadata?.full_name?.[0]?.toUpperCase() || 'U'
+              userProfile.full_name?.[0]?.toUpperCase() || 'U'
             )}
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-gray-900">{currentUser.user_metadata?.full_name}</p>
+            <p className="font-semibold text-gray-900">{userProfile.full_name || 'Usuário'}</p>
             <p className="text-sm text-gray-500">{currentUser.email}</p>
+            {userProfile.account_type && (
+              <p className="text-xs text-[#FF6B35] font-medium capitalize">
+                {userProfile.account_type}
+              </p>
+            )}
           </div>
         </div>
 
@@ -190,7 +210,7 @@ export default function Settings() {
             <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3 px-2">
               {section.title}
             </h2>
-            <div className="bg-white rounded-2xl overflow-hidden">
+            <div className="bg-white rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
               {section.items.map((item, itemIdx) => (
                 <button
                   key={itemIdx}
@@ -228,7 +248,7 @@ export default function Settings() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3 px-2">
             Zona de Perigo
           </h2>
-          <div className="bg-white rounded-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
@@ -238,11 +258,12 @@ export default function Settings() {
               </div>
               <div className="flex-1 text-left">
                 <p className="font-medium text-orange-600">Sair da Conta</p>
+                <p className="text-sm text-gray-500">Fazer logout do aplicativo</p>
               </div>
             </button>
             <button
               onClick={() => setShowDeleteDialog(true)}
-              className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center gap-4 p-4 hover:bg-red-50 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5 text-red-600" />
@@ -257,6 +278,9 @@ export default function Settings() {
 
         <div className="text-center text-sm text-gray-400 pt-4">
           FitSwap v1.0.0
+          <p className="text-xs text-gray-400 mt-1">
+            Desenvolvido com ❤️ para a comunidade fitness
+          </p>
         </div>
       </div>
 
@@ -265,15 +289,17 @@ export default function Settings() {
           <AlertDialogHeader>
             <AlertDialogTitle>Deletar sua conta?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é permanente e não pode ser desfeita. Todos os seus treinos,
-              stories e dados serão perdidos para sempre.
+              Esta ação é permanente e não pode ser desfeita. Todos os seus dados,
+              treinos, conquistas e histórico serão excluídos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="hover:bg-gray-100">
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Sim, deletar minha conta
             </AlertDialogAction>
