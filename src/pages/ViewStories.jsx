@@ -6,7 +6,7 @@ import { supabase } from "@/api/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import AdStoryView from "../components/AdStoryView";
+import AdStoryView from "../components/AdStoryView"; // ✅ JÁ CORRETO (import relativo)
 import { Link } from "react-router-dom";
 
 const STORY_DURATION = 5000;
@@ -537,4 +537,3 @@ export default function ViewStories() {
     </>
   );
 }
-
