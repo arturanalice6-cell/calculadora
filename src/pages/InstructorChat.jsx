@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Smile } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
 
 export default function InstructorChat() {
   const navigate = useNavigate();
@@ -36,12 +36,18 @@ export default function InstructorChat() {
   const { data: student } = useQuery({
     queryKey: ['student', studentEmail],
     queryFn: async () => {
+      if (!studentEmail) return null;
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('email', studentEmail)
         .single();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching student:", error);
+        return null;
+      }
       return data;
     },
     enabled: !!studentEmail
@@ -51,13 +57,18 @@ export default function InstructorChat() {
     queryKey: ['instructorStudentRelation', currentUser?.email, studentEmail],
     queryFn: async () => {
       if (!currentUser?.email || !studentEmail) return null;
+      
       const { data, error } = await supabase
         .from('instructor_students')
         .select('*')
         .eq('instructor_email', currentUser.email)
         .eq('student_email', studentEmail)
         .single();
-      if (error) return null;
+      
+      if (error) {
+        console.error("Error fetching relationship:", error);
+        return null;
+      }
       return data;
     },
     enabled: !!currentUser?.email && !!studentEmail
@@ -67,12 +78,17 @@ export default function InstructorChat() {
     queryKey: ['chatMessages', relationship?.id],
     queryFn: async () => {
       if (!relationship?.id) return [];
+      
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('subscription_id', relationship.id)
         .order('created_date', { ascending: true });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching messages:", error);
+        return [];
+      }
       return data || [];
     },
     enabled: !!relationship?.id,
@@ -82,6 +98,7 @@ export default function InstructorChat() {
   const sendMessageMutation = useMutation({
     mutationFn: async (messageText) => {
       if (!relationship?.id) throw new Error("No relationship found");
+      if (!currentUser?.email) throw new Error("No current user");
       
       const { error } = await supabase
         .from('chat_messages')
@@ -91,22 +108,28 @@ export default function InstructorChat() {
           message: messageText,
           type: 'text'
         });
+      
       if (error) throw error;
 
+      // Create notification for student
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
           user_email: studentEmail,
-          type: 'comment',
-          from_user_name: currentUser.user_metadata?.full_name,
+          type: 'message',
+          from_user_name: currentUser.user_metadata?.full_name || "Instrutor",
           from_user_email: currentUser.email,
-          text: `${currentUser.user_metadata?.full_name} enviou uma mensagem`
+          text: `${currentUser.user_metadata?.full_name || "Instrutor"} enviou uma mensagem`
         });
-      if (notificationError) throw notificationError;
+      
+      if (notificationError) console.error("Notification error:", notificationError);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['chatMessages']);
+      queryClient.invalidateQueries({ queryKey: ['chatMessages'] });
       setMessage("");
+    },
+    onError: (error) => {
+      console.error("Error sending message:", error);
     }
   });
 
@@ -116,11 +139,18 @@ export default function InstructorChat() {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    sendMessageMutation.mutate(message);
+    if (!message.trim() || sendMessageMutation.isPending) return;
+    sendMessageMutation.mutate(message.trim());
   };
 
-  if (!currentUser || !student) {
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
+  if (!currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF6B35] border-t-transparent"></div>
@@ -141,22 +171,30 @@ export default function InstructorChat() {
           
           <div className="flex items-center gap-3 flex-1">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white font-bold overflow-hidden">
-              {student.profile_photo ? (
-                <img src={student.profile_photo} alt={student.full_name} className="w-full h-full object-cover" />
+              {student?.profile_photo ? (
+                <img 
+                  src={student.profile_photo} 
+                  alt={student.full_name} 
+                  className="w-full h-full object-cover" 
+                />
               ) : (
-                student.full_name?.[0]?.toUpperCase() || 'U'
+                student?.full_name?.[0]?.toUpperCase() || studentEmail?.[0]?.toUpperCase() || 'U'
               )}
             </div>
             <div>
-              <h1 className="font-semibold text-gray-900">{student.full_name}</h1>
-              <p className="text-xs text-gray-500">@{student.email?.split('@')[0]}</p>
+              <h1 className="font-semibold text-gray-900">
+                {student?.full_name || studentEmail?.split('@')[0] || 'Aluno'}
+              </h1>
+              <p className="text-xs text-gray-500">
+                @{studentEmail?.split('@')[0] || 'aluno'}
+              </p>
             </div>
           </div>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
-        {!relationship && (
+        {!relationship && studentEmail && (
           <Card className="p-6 text-center">
             <p className="text-gray-500">
               Esta conversa ainda não foi iniciada. Envie a primeira mensagem!
@@ -205,27 +243,46 @@ export default function InstructorChat() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
         <form onSubmit={handleSendMessage} className="max-w-2xl mx-auto flex items-center gap-2">
-          <Button type="button" variant="ghost" size="icon" className="flex-shrink-0">
+          <Button 
+            type="button" 
+            variant="ghost" 
+            size="icon" 
+            className="flex-shrink-0"
+            disabled={!relationship}
+          >
             <Paperclip className="w-5 h-5 text-gray-500" />
           </Button>
           
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Digite sua mensagem..."
+            onKeyPress={handleKeyPress}
+            placeholder={relationship ? "Digite sua mensagem..." : "Carregando conversa..."}
             className="flex-1"
+            disabled={!relationship || sendMessageMutation.isPending}
           />
           
-          <Button type="button" variant="ghost" size="icon" className="flex-shrink-0">
+          <Button 
+            type="button" 
+            variant="ghost" 
+            size="icon" 
+            className="flex-shrink-0"
+            disabled={!relationship}
+          >
             <Smile className="w-5 h-5 text-gray-500" />
           </Button>
           
           <Button
             type="submit"
-            disabled={!message.trim() || sendMessageMutation.isPending}
-            className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] flex-shrink-0"
+            disabled={!message.trim() || sendMessageMutation.isPending || !relationship}
+            className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] flex-shrink-0 transition-all duration-200"
+            size="icon"
           >
-            <Send className="w-5 h-5" />
+            {sendMessageMutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </Button>
         </form>
       </div>
