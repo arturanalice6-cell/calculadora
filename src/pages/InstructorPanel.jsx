@@ -15,10 +15,10 @@ import {
   Dumbbell,
   BarChart3
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import CreatePrivateChallengeModal from "../components/CreatePrivateChallengeModal";
@@ -142,7 +142,7 @@ export default function InstructorPanel() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['instructorStudents']);
+      queryClient.invalidateQueries({ queryKey: ['instructorStudents'] });
     }
   });
 
@@ -155,7 +155,7 @@ export default function InstructorPanel() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['instructorStudents']);
+      queryClient.invalidateQueries({ queryKey: ['instructorStudents'] });
     }
   });
 
@@ -183,7 +183,7 @@ export default function InstructorPanel() {
       if (notificationError) throw notificationError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['instructorStudents']);
+      queryClient.invalidateQueries({ queryKey: ['instructorStudents'] });
     }
   });
 
@@ -459,7 +459,7 @@ export default function InstructorPanel() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Meus Planos de Treino</h3>
               <Link to={createPageUrl("CreateWorkoutPlan")}>
-                <Button className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]">
+                <Button className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]">
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Plano
                 </Button>
@@ -472,7 +472,7 @@ export default function InstructorPanel() {
                   <Dumbbell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 mb-4">Nenhum plano de treino criado</p>
                   <Link to={createPageUrl("CreateWorkoutPlan")}>
-                    <Button className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]">
+                    <Button className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]">
                       Criar Primeiro Plano
                     </Button>
                   </Link>
@@ -481,7 +481,7 @@ export default function InstructorPanel() {
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {workoutPlans.map((plan) => (
-                  <Card key={plan.id}>
+                  <Card key={plan.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       {plan.cover_image && (
                         <img src={plan.cover_image} alt={plan.title} className="w-full h-32 object-cover rounded-lg mb-3" />
@@ -513,7 +513,7 @@ export default function InstructorPanel() {
               <h3 className="text-lg font-semibold text-gray-900">Desafios Privados</h3>
               <Button 
                 onClick={() => setShowCreateChallengeModal(true)}
-                className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+                className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Desafio
@@ -527,7 +527,7 @@ export default function InstructorPanel() {
                   <p className="text-gray-500 mb-4">Nenhum desafio privado criado</p>
                   <Button 
                     onClick={() => setShowCreateChallengeModal(true)}
-                    className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+                    className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
                   >
                     Criar Primeiro Desafio
                   </Button>
@@ -536,7 +536,7 @@ export default function InstructorPanel() {
             ) : (
               <div className="space-y-3">
                 {privateChallenges.map((challenge) => (
-                  <Card key={challenge.id}>
+                  <Card key={challenge.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex gap-4">
                         {challenge.image_url && (
@@ -572,7 +572,7 @@ export default function InstructorPanel() {
             ) : (
               <div className="space-y-2">
                 {potentialStudents.map((student) => (
-                  <Card key={student.email}>
+                  <Card key={student.email} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white font-bold overflow-hidden">
@@ -590,7 +590,7 @@ export default function InstructorPanel() {
                           size="sm"
                           onClick={() => inviteStudentMutation.mutate(student.email)}
                           disabled={inviteStudentMutation.isPending}
-                          className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+                          className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
                         >
                           Convidar
                         </Button>
