@@ -1,23 +1,22 @@
 import React from 'react';
 import { cn } from "@/utils";
 
-// Componentes genéricos de Card
 export const Card = ({ className = '', children, ...props }) => {
   return (
-    <div className={cn("bg-white rounded-lg border border-gray-200 shadow-sm", className)} {...props}>
+    <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)} {...props}>
       {children}
     </div>
   );
 };
 
 export const CardHeader = ({ className = '', children, ...props }) => (
-  <div className={cn("p-6 pb-4", className)} {...props}>
+  <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props}>
     {children}
   </div>
 );
 
 export const CardTitle = ({ className = '', children, ...props }) => (
-  <h3 className={cn("text-lg font-semibold text-gray-900", className)} {...props}>
+  <h3 className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props}>
     {children}
   </h3>
 );
