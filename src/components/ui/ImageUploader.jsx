@@ -10,7 +10,7 @@ export const ImageUploader = ({ onUpload }) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      const fileName = ${Date.now()}-${file.name};
+      const fileName = `${Date.now()}-${file.name}`;
       const { data, error } = await supabase.storage
         .from("posts")
         .upload(fileName, file);
@@ -45,4 +45,3 @@ export const ImageUploader = ({ onUpload }) => {
     </div>
   );
 };
-
