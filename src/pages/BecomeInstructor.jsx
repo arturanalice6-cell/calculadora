@@ -3,10 +3,10 @@ import { supabase } from "@/api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Award, DollarSign, Users, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { useMutation } from "@tanstack/react-query";
 
 const SPECIALTIES = [
