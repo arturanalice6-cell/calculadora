@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
 import StoryCircle from "../components/StoryCircle";
 import PostCard from "../components/PostCard";
-import AdStory from "../components/AdStory"; // Componente 'AdStory' corrigido
+import AdStory from "../components/AdStory";
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
