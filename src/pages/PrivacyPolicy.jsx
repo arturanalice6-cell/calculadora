@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
       </header>
 
       <div className="max-w-3xl mx-auto p-4 pb-24 space-y-6">
-        <div className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] rounded-2xl p-6 text-white shadow-lg">
           <Shield className="w-12 h-12 mb-4" />
           <h2 className="text-2xl font-bold mb-2">Sua privacidade importa</h2>
           <p className="opacity-90">
@@ -33,41 +33,71 @@ export default function PrivacyPolicy() {
           </p>
         </div>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">1. Informações que Coletamos</h3>
           
           <div className="space-y-4">
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">1.1. Dados de Cadastro</h4>
-              <p className="text-gray-600 text-sm">
-                • Nome completo<br />
-                • Endereço de e-mail<br />
-                • Dados de perfil (bio, foto, objetivos fitness)
-              </p>
+              <ul className="text-gray-600 text-sm space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Nome completo
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Endereço de e-mail
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Dados de perfil (bio, foto, objetivos fitness)
+                </li>
+              </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">1.2. Dados de Treino e Progresso</h4>
-              <p className="text-gray-600 text-sm">
-                • Registros de treinos<br />
-                • Fotos de comprovante e progresso físico<br />
-                • Estatísticas e métricas de performance<br />
-                • Participação em desafios
-              </p>
+              <ul className="text-gray-600 text-sm space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Registros de treinos
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Fotos de comprovante e progresso físico
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Estatísticas e métricas de performance
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Participação em desafios
+                </li>
+              </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">1.3. Conteúdo Gerado pelo Usuário</h4>
-              <p className="text-gray-600 text-sm">
-                • Posts e stories<br />
-                • Comentários e curtidas<br />
-                • Mensagens em chats de instrutores
-              </p>
+              <ul className="text-gray-600 text-sm space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Posts e stories
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Comentários e curtidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                  Mensagens em chats de instrutores
+                </li>
+              </ul>
             </div>
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">2. Permissões do Dispositivo</h3>
           
           <div className="space-y-4">
@@ -77,12 +107,20 @@ export default function PrivacyPolicy() {
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-1">Acesso à Câmera</h4>
-                <p className="text-gray-600 text-sm">
-                  <strong>Por que precisamos:</strong> Para tirar fotos de comprovantes de treino, 
-                  progresso físico e criar stories.<br />
-                  <strong>Quando solicitamos:</strong> Apenas quando você clicar em "Tirar Foto".<br />
-                  <strong>Você pode negar:</strong> Sim, e ainda usar a galeria para fazer upload de fotos.
-                </p>
+                <ul className="text-gray-600 text-sm space-y-1">
+                  <li className="flex items-start gap-2">
+                    <strong className="text-gray-700">Por que precisamos:</strong> 
+                    <span>Para tirar fotos de comprovantes de treino, progresso físico e criar stories.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <strong className="text-gray-700">Quando solicitamos:</strong> 
+                    <span>Apenas quando você clicar em "Tirar Foto".</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <strong className="text-gray-700">Você pode negar:</strong> 
+                    <span>Sim, e ainda usar a galeria para fazer upload de fotos.</span>
+                  </li>
+                </ul>
               </div>
             </div>
 
@@ -92,12 +130,20 @@ export default function PrivacyPolicy() {
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900 mb-1">Acesso à Galeria</h4>
-                <p className="text-gray-600 text-sm">
-                  <strong>Por que precisamos:</strong> Para selecionar fotos existentes do seu 
-                  progresso fitness e compartilhar treinos.<br />
-                  <strong>Quando solicitamos:</strong> Apenas quando você clicar em "Escolher da Galeria".<br />
-                  <strong>Você pode negar:</strong> Sim, mas não poderá fazer upload de fotos da galeria.
-                </p>
+                <ul className="text-gray-600 text-sm space-y-1">
+                  <li className="flex items-start gap-2">
+                    <strong className="text-gray-700">Por que precisamos:</strong> 
+                    <span>Para selecionar fotos existentes do seu progresso fitness e compartilhar treinos.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <strong className="text-gray-700">Quando solicitamos:</strong> 
+                    <span>Apenas quando você clicar em "Escolher da Galeria".</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <strong className="text-gray-700">Você pode negar:</strong> 
+                    <span>Sim, mas não poderá fazer upload de fotos da galeria.</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -110,21 +156,42 @@ export default function PrivacyPolicy() {
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">3. Como Usamos Seus Dados</h3>
           
           <ul className="space-y-2 text-gray-600 text-sm">
-            <li>✓ Fornecer e melhorar nossos serviços</li>
-            <li>✓ Personalizar sua experiência fitness</li>
-            <li>✓ Conectar você com outros usuários e instrutores</li>
-            <li>✓ Processar pagamentos de planos e assinaturas</li>
-            <li>✓ Enviar notificações sobre atividades relevantes</li>
-            <li>✓ Garantir segurança e prevenir fraudes</li>
-            <li>✓ Analisar estatísticas de uso (dados anonimizados)</li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Fornecer e melhorar nossos serviços
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Personalizar sua experiência fitness
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Conectar você com outros usuários e instrutores
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Processar pagamentos de planos e assinaturas
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Enviar notificações sobre atividades relevantes
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Garantir segurança e prevenir fraudes
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              Analisar estatísticas de uso (dados anonimizados)
+            </li>
           </ul>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">4. Compartilhamento de Dados</h3>
           
           <div className="space-y-3">
@@ -139,34 +206,46 @@ export default function PrivacyPolicy() {
             </p>
 
             <ul className="space-y-2 text-gray-600 text-sm ml-4">
-              <li>• Você autoriza explicitamente (posts públicos, perfil público)</li>
-              <li>• Necessário para processar pagamentos (gateways seguros)</li>
-              <li>• Exigido por lei ou ordem judicial</li>
-              <li>• Para proteger direitos e segurança do FitSwap e usuários</li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                Você autoriza explicitamente (posts públicos, perfil público)
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                Necessário para processar pagamentos (gateways seguros)
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                Exigido por lei ou ordem judicial
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+                Para proteger direitos e segurança do FitSwap e usuários
+              </li>
             </ul>
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">5. Armazenamento e Segurança</h3>
           
           <div className="space-y-3 text-gray-600 text-sm">
-            <p>
-              <strong>Onde armazenamos:</strong> Seus dados são armazenados em servidores 
-              seguros na nuvem com criptografia.
+            <p className="flex items-start gap-2">
+              <strong className="text-gray-700 min-w-32">Onde armazenamos:</strong>
+              <span>Seus dados são armazenados em servidores seguros na nuvem com criptografia.</span>
             </p>
-            <p>
-              <strong>Por quanto tempo:</strong> Mantemos seus dados enquanto sua conta estiver 
-              ativa. Após exclusão da conta, dados são removidos em até 30 dias.
+            <p className="flex items-start gap-2">
+              <strong className="text-gray-700 min-w-32">Por quanto tempo:</strong>
+              <span>Mantemos seus dados enquanto sua conta estiver ativa. Após exclusão da conta, dados são removidos em até 30 dias.</span>
             </p>
-            <p>
-              <strong>Segurança:</strong> Utilizamos HTTPS, criptografia de dados sensíveis, 
-              autenticação segura e backups regulares.
+            <p className="flex items-start gap-2">
+              <strong className="text-gray-700 min-w-32">Segurança:</strong>
+              <span>Utilizamos HTTPS, criptografia de dados sensíveis, autenticação segura e backups regulares.</span>
             </p>
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">6. Seus Direitos (LGPD)</h3>
           
           <p className="text-gray-600 text-sm mb-4">
@@ -213,7 +292,7 @@ export default function PrivacyPolicy() {
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">7. Uso por Menores de Idade</h3>
           
           <p className="text-gray-600 text-sm">
@@ -224,21 +303,33 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">8. Cookies e Tecnologias</h3>
           
           <p className="text-gray-600 text-sm mb-3">
             Utilizamos cookies e tecnologias similares para:
           </p>
           <ul className="space-y-1 text-gray-600 text-sm ml-4">
-            <li>• Manter você logado na plataforma</li>
-            <li>• Lembrar suas preferências</li>
-            <li>• Analisar como você usa o app (dados anonimizados)</li>
-            <li>• Melhorar desempenho e funcionalidades</li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+              Manter você logado na plataforma
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+              Lembrar suas preferências
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+              Analisar como você usa o app (dados anonimizados)
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full"></div>
+              Melhorar desempenho e funcionalidades
+            </li>
           </ul>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">9. Alterações nesta Política</h3>
           
           <p className="text-gray-600 text-sm">
@@ -248,7 +339,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section className="bg-white rounded-2xl p-6">
+        <section className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-xl font-bold text-gray-900 mb-4">10. Entre em Contato</h3>
           
           <p className="text-gray-600 text-sm mb-4">
@@ -256,7 +347,10 @@ export default function PrivacyPolicy() {
           </p>
 
           <div className="space-y-2 text-gray-700 text-sm">
-            <p><strong>Email:</strong> clebersimoessilva@gmail.com</p>
+            <p className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-[#FF6B35]" />
+              <strong>Email:</strong> clebersimoessilva@gmail.com
+            </p>
           </div>
         </section>
 
