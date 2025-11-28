@@ -31,6 +31,12 @@ export default function Layout({ children, currentPageName }) {
           right: 0 !important;
           z-index: 9999 !important;
         }
+
+        @supports(padding: max(0px)) {
+          .bottom-nav-fixed {
+            padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+          }
+        }
       `}</style>
       
       <main className="max-w-2xl mx-auto pb-24">
@@ -40,7 +46,10 @@ export default function Layout({ children, currentPageName }) {
       <nav className="bottom-nav-fixed bg-white/95 backdrop-blur-lg border-t border-gray-200 shadow-2xl">
         <div 
           className="max-w-2xl mx-auto flex justify-around items-center h-16 px-0.5"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          style={{ 
+            paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)',
+            minHeight: 'calc(4rem + env(safe-area-inset-bottom, 0px))'
+          }}
         >
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -51,9 +60,9 @@ export default function Layout({ children, currentPageName }) {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="flex flex-col items-center justify-center flex-1 transition-all min-w-0"
+                  className="flex flex-col items-center justify-center flex-1 transition-all min-w-0 relative z-10"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] flex items-center justify-center shadow-xl -mt-6 border-4 border-white hover:scale-105 transition-transform">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] flex items-center justify-center shadow-xl -mt-6 border-4 border-white hover:scale-105 active:scale-95 transition-transform duration-200">
                     <Icon className="w-6 h-6 text-white" strokeWidth={2.5} />
                   </div>
                 </Link>
@@ -64,17 +73,17 @@ export default function Layout({ children, currentPageName }) {
               <Link
                 key={item.name}
                 to={item.path}
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 transition-all min-w-0 py-2"
+                className="flex flex-col items-center justify-center gap-0.5 flex-1 transition-all min-w-0 py-2 hover:bg-gray-50/50 active:bg-gray-100 rounded-lg mx-0.5"
               >
-                <div className={`transition-all ${active ? 'scale-110' : 'scale-100'}`}>
+                <div className={`transition-all duration-200 ${active ? 'scale-110' : 'scale-100'}`}>
                   <Icon 
-                    className={`w-5 h-5 transition-colors ${
+                    className={`w-5 h-5 transition-colors duration-200 ${
                       active ? 'text-[#FF6B35]' : 'text-gray-400'
                     }`}
                     strokeWidth={active ? 2.5 : 2}
                   />
                 </div>
-                <span className={`text-[9px] font-medium transition-colors truncate max-w-full px-0.5 ${
+                <span className={`text-[9px] font-medium transition-colors duration-200 truncate max-w-full px-0.5 ${
                   active ? 'text-[#FF6B35]' : 'text-gray-500'
                 }`}>
                   {item.label}
