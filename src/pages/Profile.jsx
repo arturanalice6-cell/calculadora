@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings, Grid, Bookmark, Camera, Check, Download, Trash2, Award } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
@@ -16,11 +16,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/AlertDialog";
 
 export default function Profile() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [activeTab, setActiveTab] = useState("posts");
   const [selectedPost, setSelectedPost] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -33,8 +34,18 @@ export default function Profile() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         setCurrentUser(user);
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+          
+          setUserProfile(profile);
+        }
       } catch (error) {
-        console.log("User not logged in");
+        console.log("Error fetching user:", error);
       }
     };
     getUser();
@@ -49,6 +60,7 @@ export default function Profile() {
         .select('*')
         .eq('created_by', currentUser.email)
         .order('created_date', { ascending: false });
+      
       if (error) throw error;
       return data || [];
     },
@@ -59,21 +71,25 @@ export default function Profile() {
     queryKey: ['userSavedPosts', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return [];
+      
+      // Get saved post IDs
       const { data: saved, error } = await supabase
         .from('saved_posts')
-        .select('*')
+        .select('post_id')
         .eq('user_email', currentUser.email);
+      
       if (error) throw error;
-
       if (!saved || saved.length === 0) return [];
-
+      
       const postIds = saved.map(s => s.post_id);
+      
+      // Get the actual posts
       const { data: posts, error: postsError } = await supabase
         .from('posts')
         .select('*')
         .in('id', postIds);
+      
       if (postsError) throw postsError;
-
       return posts || [];
     },
     enabled: !!currentUser?.email
@@ -83,13 +99,16 @@ export default function Profile() {
     queryKey: ['userStories', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return [];
+      
       const { data, error } = await supabase
         .from('stories')
         .select('*')
         .eq('created_by', currentUser.email)
         .order('created_date', { ascending: false });
+      
       if (error) throw error;
-
+      
+      // Filter stories from last 24 hours
       const now = new Date();
       return (data || []).filter(story => {
         const createdDate = new Date(story.created_date);
@@ -104,12 +123,14 @@ export default function Profile() {
     queryKey: ['followersCount', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return 0;
-      const { data, error } = await supabase
+      
+      const { data, error, count } = await supabase
         .from('follows')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('following_email', currentUser.email);
+      
       if (error) throw error;
-      return data?.length || 0;
+      return count || 0;
     },
     enabled: !!currentUser?.email
   });
@@ -118,12 +139,14 @@ export default function Profile() {
     queryKey: ['followingCount', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return 0;
-      const { data, error } = await supabase
+      
+      const { data, error, count } = await supabase
         .from('follows')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('follower_email', currentUser.email);
+      
       if (error) throw error;
-      return data?.length || 0;
+      return count || 0;
     },
     enabled: !!currentUser?.email
   });
@@ -132,58 +155,54 @@ export default function Profile() {
     queryKey: ['userAchievements', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return [];
+      
       const { data, error } = await supabase
         .from('achievements')
         .select('*')
         .eq('user_email', currentUser.email)
         .order('unlocked_at', { ascending: false });
+      
       if (error) throw error;
       return data || [];
     },
     enabled: !!currentUser?.email
   });
 
-  const totalPoints = achievements.reduce((sum, a) => sum + (a.points || 0), 0);
-
   const deletePostMutation = useMutation({
     mutationFn: async (postId) => {
-      const { error: likesError } = await supabase
-        .from('likes')
-        .delete()
-        .eq('post_id', postId);
-      if (likesError) throw likesError;
+      // Delete all related data first
+      await Promise.all([
+        // Delete likes
+        supabase.from('likes').delete().eq('post_id', postId),
+        // Delete comments
+        supabase.from('comments').delete().eq('post_id', postId),
+        // Delete saved posts
+        supabase.from('saved_posts').delete().eq('post_id', postId),
+        // Delete notifications related to this post
+        supabase.from('notifications').delete().eq('post_id', postId)
+      ]);
 
-      const { error: commentsError } = await supabase
-        .from('comments')
-        .delete()
-        .eq('post_id', postId);
-      if (commentsError) throw commentsError;
-
-      const { error: savedError } = await supabase
-        .from('saved_posts')
-        .delete()
-        .eq('post_id', postId);
-      if (savedError) throw savedError;
-
-      const { error: notificationsError } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('post_id', postId);
-      if (notificationsError) throw notificationsError;
-
-      const { error: postError } = await supabase
+      // Finally delete the post
+      const { error } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
-      if (postError) throw postError;
+      
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['userPosts']);
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
       setShowDeleteDialog(false);
       setSelectedPost(null);
       setShowMenu(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting post:", error);
+      alert("Erro ao excluir post. Tente novamente.");
     }
   });
+
+  const totalPoints = achievements.reduce((sum, a) => sum + (a.points || 0), 0);
 
   const handleLongPressStart = (e, post) => {
     e.preventDefault();
@@ -195,7 +214,7 @@ export default function Profile() {
       });
       setSelectedPost(post);
       setShowMenu(true);
-    }, 500);
+    }, 500); // 500ms long press
     setLongPressTimer(timer);
   };
 
@@ -208,6 +227,7 @@ export default function Profile() {
 
   const handleSaveImage = async (imageUrl) => {
     try {
+      // Tentar baixar a imagem
       const link = document.createElement('a');
       link.href = imageUrl;
       link.download = `fitswap-${Date.now()}.jpg`;
@@ -233,7 +253,7 @@ export default function Profile() {
     }
   };
 
-  if (!currentUser) {
+  if (!currentUser || !userProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF6B35] border-t-transparent"></div>
@@ -245,13 +265,14 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900">
               @{currentUser.email?.split('@')[0]}
             </h1>
-            {isInstructor && currentUser.user_metadata?.is_verified && (
+            {isInstructor && userProfile.is_verified && (
               <div className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-lg">
                 <Award className="w-4 h-4 text-white" />
                 <span className="text-sm font-bold text-white">Instrutor Verificado</span>
@@ -266,24 +287,26 @@ export default function Profile() {
         </div>
       </header>
 
+      {/* Cover Photo */}
       <div className="relative h-48 bg-gradient-to-br from-[#FF6B35] to-[#FF006E]">
-        {currentUser.user_metadata?.cover_photo && (
-          <img src={currentUser.user_metadata.cover_photo} alt="Capa" className="w-full h-full object-cover" />
+        {userProfile.cover_photo && (
+          <img src={userProfile.cover_photo} alt="Capa" className="w-full h-full object-cover" />
         )}
       </div>
 
+      {/* Profile Info */}
       <div className="px-4 pb-4">
         <div className="relative -mt-16 mb-4">
           <div className="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-lg">
-            {currentUser.user_metadata?.profile_photo ? (
-              <img src={currentUser.user_metadata.profile_photo} alt={currentUser.user_metadata?.full_name} className="w-full h-full object-cover" />
+            {userProfile.profile_photo ? (
+              <img src={userProfile.profile_photo} alt={userProfile.full_name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white text-4xl font-bold">
-                {currentUser.user_metadata?.full_name?.[0]?.toUpperCase() || 'U'}
+                {userProfile.full_name?.[0]?.toUpperCase() || 'U'}
               </div>
             )}
           </div>
-          {isInstructor && currentUser.user_metadata?.is_verified && (
+          {isInstructor && userProfile.is_verified && (
             <div className="absolute bottom-2 right-2 w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
               <Check className="w-5 h-5 text-white" />
             </div>
@@ -292,7 +315,7 @@ export default function Profile() {
 
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-gray-900">{currentUser.user_metadata?.full_name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{userProfile.full_name || 'Usuário'}</h1>
           </div>
           <p className="text-gray-500">@{currentUser.email?.split('@')[0]}</p>
           {isInstructor && (
@@ -300,64 +323,66 @@ export default function Profile() {
               <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
                 💪 Instrutor de Educação Física
               </Badge>
-              {currentUser.user_metadata?.is_verified && (
+              {userProfile.is_verified && (
                 <Badge className="bg-green-500 text-white">
                   ✓ Verificado
                 </Badge>
               )}
             </div>
           )}
-          {currentUser.user_metadata?.bio && (
-            <p className="text-gray-700 mt-2">{currentUser.user_metadata.bio}</p>
+          {userProfile.bio && (
+            <p className="text-gray-700 mt-2">{userProfile.bio}</p>
           )}
 
-          {currentUser.user_metadata?.specialties && currentUser.user_metadata.specialties.length > 0 && (
+          {userProfile.specialties && userProfile.specialties.length > 0 && (
             <div className="flex gap-2 mt-2 flex-wrap">
-              {currentUser.user_metadata.specialties.map((specialty, idx) => (
+              {userProfile.specialties.map((specialty, idx) => (
                 <Badge key={idx} variant="outline">{specialty}</Badge>
               ))}
             </div>
           )}
         </div>
 
+        {/* Action Buttons */}
         <div className="space-y-2 mb-4">
           <Link to={createPageUrl("EditProfile")}>
-            <Button className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:shadow-lg">
+            <Button className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] hover:shadow-lg transition-all">
               Editar Perfil
             </Button>
           </Link>
 
           {isInstructor && (
             <Link to={createPageUrl("InstructorPanel")}>
-              <Button variant="outline" className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold">
-                🎓 Painel de Instrutor
+              <Button variant="outline" className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold transition-colors">
+                🎯 Painel de Instrutor
               </Button>
             </Link>
           )}
 
           <Link to={createPageUrl("WorkoutHistory")}>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full hover:bg-gray-50 transition-colors">
               📊 Meu Progresso
             </Button>
           </Link>
 
           {!isInstructor && (
             <Link to={createPageUrl("MySubscriptions")}>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full hover:bg-gray-50 transition-colors">
                 💳 Minhas Assinaturas
               </Button>
             </Link>
           )}
 
           <Link to={createPageUrl("DirectMessages")}>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full hover:bg-gray-50 transition-colors">
               💬 Mensagens
             </Button>
           </Link>
         </div>
 
+        {/* Achievements Display */}
         {achievements.length > 0 && (
-          <div className="mb-4 p-4 bg-white rounded-xl border border-gray-200">
+          <div className="mb-4 p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900">Conquistas</h3>
               <Badge className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] text-white">
@@ -381,7 +406,7 @@ export default function Profile() {
               ))}
               {achievements.length > 6 && (
                 <Link to={createPageUrl("WorkoutHistory")}>
-                  <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
+                  <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 hover:bg-gray-200 transition-colors">
                     +{achievements.length - 6}
                   </div>
                 </Link>
@@ -433,7 +458,7 @@ export default function Profile() {
                 <Grid className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">Nenhum treino publicado ainda</p>
                 <Link to={createPageUrl("CreatePost")}>
-                  <Button className="mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF006E]">
+                  <Button className="mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]">
                     Publicar Primeiro Treino
                   </Button>
                 </Link>
@@ -496,7 +521,7 @@ export default function Profile() {
                 <Camera className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">Nenhum status ativo</p>
                 <Link to={createPageUrl("CreateStory")}>
-                  <Button className="mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF006E]">
+                  <Button className="mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]">
                     Criar Status
                   </Button>
                 </Link>
@@ -514,6 +539,7 @@ export default function Profile() {
         </Tabs>
       </div>
 
+      {/* Long Press Menu */}
       {showMenu && selectedPost && (
         <>
           <div
@@ -550,6 +576,7 @@ export default function Profile() {
         </>
       )}
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -569,10 +596,13 @@ export default function Profile() {
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deletePostMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {deletePostMutation.isPending ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Excluindo...
+                </div>
               ) : (
                 'Excluir'
               )}
