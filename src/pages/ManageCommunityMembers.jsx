@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, UserX, Shield, Crown, Users } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent } from "@/components/ui/Card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/AlertDialog";
 
 export default function ManageCommunityMembers() {
   const navigate = useNavigate();
@@ -41,6 +41,7 @@ export default function ManageCommunityMembers() {
   const { data: community } = useQuery({
     queryKey: ['community', communityId],
     queryFn: async () => {
+      if (!communityId) return null;
       const { data, error } = await supabase
         .from('communities')
         .select('*')
@@ -55,6 +56,7 @@ export default function ManageCommunityMembers() {
   const { data: members = [] } = useQuery({
     queryKey: ['communityMembers', communityId],
     queryFn: async () => {
+      if (!communityId) return [];
       const { data, error } = await supabase
         .from('community_members')
         .select('*')
@@ -96,11 +98,23 @@ export default function ManageCommunityMembers() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['communityMembers']);
-      queryClient.invalidateQueries(['community']);
+      queryClient.invalidateQueries({ queryKey: ['communityMembers'] });
+      queryClient.invalidateQueries({ queryKey: ['community'] });
       setMemberToRemove(null);
+    },
+    onError: (error) => {
+      console.error("Error removing member:", error);
+      alert("Erro ao remover membro. Tente novamente.");
     }
   });
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF6B35] border-t-transparent"></div>
+      </div>
+    );
+  }
 
   if (!community) {
     return (
@@ -127,7 +141,7 @@ export default function ManageCommunityMembers() {
       <header className="sticky top-0 bg-white border-b border-gray-200 z-40">
         <div className="flex items-center gap-4 px-4 py-3">
           <button
-            onClick={() => navigate(createPageUrl("Communities"))}
+            onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-700" />
@@ -166,7 +180,7 @@ export default function ManageCommunityMembers() {
           ) : (
             <div className="space-y-2">
               {membersWithUserInfo.map((member) => (
-                <Card key={member.id}>
+                <Card key={member.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
@@ -181,9 +195,9 @@ export default function ManageCommunityMembers() {
                         )}
                       </div>
                       
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900 truncate">
                             {member.userInfo?.full_name || 'Usuário'}
                           </h3>
                           {member.role === 'owner' && (
@@ -199,7 +213,7 @@ export default function ManageCommunityMembers() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 truncate">
                           @{member.user_email?.split('@')[0]}
                         </p>
                       </div>
@@ -209,7 +223,8 @@ export default function ManageCommunityMembers() {
                           variant="outline"
                           size="sm"
                           onClick={() => setMemberToRemove(member)}
-                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors flex-shrink-0"
+                          disabled={removeMemberMutation.isPending}
                         >
                           <UserX className="w-4 h-4 mr-2" />
                           Remover
@@ -229,17 +244,27 @@ export default function ManageCommunityMembers() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remover Membro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover "{memberToRemove?.userInfo?.full_name}" da comunidade?
+              Tem certeza que deseja remover "{memberToRemove?.userInfo?.full_name || 'este membro'}" da comunidade?
               Esta pessoa poderá entrar novamente se a comunidade for pública.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={removeMemberMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => removeMemberMutation.mutate(memberToRemove.id)}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={() => removeMemberMutation.mutate(memberToRemove?.id)}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={removeMemberMutation.isPending}
             >
-              {removeMemberMutation.isPending ? "Removendo..." : "Remover"}
+              {removeMemberMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Removendo...
+                </div>
+              ) : (
+                "Remover"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
