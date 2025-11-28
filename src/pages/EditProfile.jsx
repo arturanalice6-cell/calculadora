@@ -3,9 +3,9 @@ import { supabase } from "@/api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { X, Camera, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { useMutation } from "@tanstack/react-query";
 
 export default function EditProfile() {
