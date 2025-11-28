@@ -2,7 +2,7 @@ import React from "react";
 import { ArrowLeft, Camera, Image as ImageIcon, Settings, AlertCircle, CheckCircle, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "../utils";
-import { Card, CardContent } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/Card";
 
 export default function PermissionsHelp() {
   const navigate = useNavigate();
@@ -56,10 +56,22 @@ export default function PermissionsHelp() {
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 mb-1">Câmera</h4>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>✓ Tirar fotos de comprovante de treino</li>
-                      <li>✓ Registrar progresso físico (antes/depois)</li>
-                      <li>✓ Criar stories do seu dia de treino</li>
-                      <li>✓ Comprovar participação em desafios</li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Tirar fotos de comprovante de treino
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Registrar progresso físico (antes/depois)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Criar stories do seu dia de treino
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Comprovar participação em desafios
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -75,10 +87,22 @@ export default function PermissionsHelp() {
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 mb-1">Galeria de Fotos</h4>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>✓ Selecionar fotos existentes de treinos</li>
-                      <li>✓ Fazer upload de imagens do seu progresso</li>
-                      <li>✓ Compartilhar conquistas anteriores</li>
-                      <li>✓ Editar perfil com suas fotos</li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Selecionar fotos existentes de treinos
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Fazer upload de imagens do seu progresso
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Compartilhar conquistas anteriores
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Editar perfil com suas fotos
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -252,10 +276,22 @@ export default function PermissionsHelp() {
                   <strong>Solução:</strong>
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                  <li>• Feche completamente o app e abra novamente</li>
-                  <li>• Verifique se outro app está usando a câmera</li>
-                  <li>• Reinicie seu celular</li>
-                  <li>• Use a opção "Galeria" como alternativa</li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Feche completamente o app e abra novamente
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Verifique se outro app está usando a câmera
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Reinicie seu celular
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Use a opção "Galeria" como alternativa
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -269,10 +305,22 @@ export default function PermissionsHelp() {
                   <strong>Solução:</strong>
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                  <li>• Verifique se a permissão de fotos está ativada</li>
-                  <li>• Limpe o cache do navegador</li>
-                  <li>• Atualize para a versão mais recente do app</li>
-                  <li>• Tente usar a câmera diretamente</li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Verifique se a permissão de fotos está ativada
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Limpe o cache do navegador
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Atualize para a versão mais recente do app
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Tente usar a câmera diretamente
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -286,9 +334,18 @@ export default function PermissionsHelp() {
                   <strong>Solução:</strong>
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                  <li>• Siga os passos acima para ativar manualmente</li>
-                  <li>• Verifique se não bloqueou permanentemente</li>
-                  <li>• Desinstale e reinstale o app (último recurso)</li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Siga os passos acima para ativar manualmente
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Verifique se não bloqueou permanentemente
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#FF6B35] rounded-full"></div>
+                    Desinstale e reinstale o app (último recurso)
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -323,7 +380,7 @@ export default function PermissionsHelp() {
             </p>
             <a 
               href="mailto:clebersimoessilva@gmail.com"
-              className="text-[#FF6B35] font-semibold hover:underline"
+              className="text-[#FF6B35] font-semibold hover:underline transition-colors"
             >
               clebersimoessilva@gmail.com
             </a>
