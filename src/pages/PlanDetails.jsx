@@ -4,16 +4,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Check, Calendar, Users, MessageCircle, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/Dialog";
 
 export default function PlanDetails() {
   const navigate = useNavigate();
@@ -40,6 +40,7 @@ export default function PlanDetails() {
   const { data: plan, isLoading } = useQuery({
     queryKey: ['plan', planId],
     queryFn: async () => {
+      if (!planId) return null;
       const { data, error } = await supabase
         .from('workout_plans')
         .select('*')
@@ -54,6 +55,7 @@ export default function PlanDetails() {
   const { data: instructor } = useQuery({
     queryKey: ['instructor', plan?.instructor_email],
     queryFn: async () => {
+      if (!plan?.instructor_email) return null;
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -67,6 +69,10 @@ export default function PlanDetails() {
 
   const subscribeMutation = useMutation({
     mutationFn: async (data) => {
+      if (!currentUser?.email || !planId || !plan?.instructor_email) {
+        throw new Error("Dados incompletos para assinatura");
+      }
+
       const { data: subscription, error } = await supabase
         .from('subscriptions')
         .insert([{
@@ -95,7 +101,7 @@ export default function PlanDetails() {
       return subscription;
     },
     onSuccess: (subscription) => {
-      queryClient.invalidateQueries(['plan', planId]);
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
       setShowCheckout(false);
       
       if (subscription.status === 'pending') {
@@ -104,12 +110,17 @@ export default function PlanDetails() {
         alert("Assinatura realizada com sucesso! Bem-vindo ao plano!");
         navigate(createPageUrl("MySubscriptions"));
       }
+    },
+    onError: (error) => {
+      console.error("Subscription error:", error);
+      alert("Erro ao processar assinatura. Tente novamente.");
     }
   });
 
   const handleSubscribe = () => {
     if (!currentUser) {
       alert("Faça login para assinar este plano");
+      navigate(createPageUrl("Login"));
       return;
     }
     setShowCheckout(true);
@@ -122,6 +133,16 @@ export default function PlanDetails() {
     }
 
     subscribeMutation.mutate({ paymentMethod });
+  };
+
+  const generatePixCode = () => {
+    if (!currentUser || !plan) return 'N/A';
+    
+    const amount = plan.price_monthly ? plan.price_monthly.toFixed(2).replace('.', '') : '000';
+    const userIdentifier = currentUser.id || '00000000-0000-0000-0000-000000000000';
+    const userIdentifierLength = userIdentifier.length.toString().padStart(2, '0');
+
+    return `00020126${userIdentifierLength}0014BR.GOV.BCB.PIX01${userIdentifierLength}${userIdentifier}520400005303986540${amount}5802BR6009SAO PAULO62070503***6304ABCD`;
   };
 
   if (isLoading) {
@@ -137,23 +158,16 @@ export default function PlanDetails() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 mb-4">Plano não encontrado</p>
-          <Button onClick={() => navigate(createPageUrl("MarketplacePlans"))}>
+          <Button 
+            onClick={() => navigate(createPageUrl("MarketplacePlans"))}
+            className="bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
+          >
             Ver Outros Planos
           </Button>
         </div>
       </div>
     );
   }
-
-  const generatePixCode = () => {
-    if (!currentUser || !plan) return 'N/A';
-    
-    const amount = plan.price_monthly ? plan.price_monthly.toFixed(2).replace('.', '') : '000';
-    const userIdentifier = currentUser.id || '00000000-0000-0000-0000-000000000000';
-    const userIdentifierLength = userIdentifier.length.toString().padStart(2, '0');
-
-    return `00020126${userIdentifierLength}0014BR.GOV.BCB.PIX01${userIdentifierLength}${userIdentifier}520400005303986540${amount}5802BR6009SAO PAULO62070503***6304ABCD`;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -204,11 +218,19 @@ export default function PlanDetails() {
           </div>
 
           {instructor && (
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white font-bold">
-                    {instructor.full_name?.[0]?.toUpperCase() || 'I'}
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF006E] flex items-center justify-center text-white font-bold overflow-hidden">
+                    {instructor.profile_photo ? (
+                      <img 
+                        src={instructor.profile_photo} 
+                        alt={instructor.full_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      instructor.full_name?.[0]?.toUpperCase() || 'I'
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -230,15 +252,15 @@ export default function PlanDetails() {
           )}
 
           <div className="grid grid-cols-3 gap-4">
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 text-center">
                 <Users className="w-6 h-6 text-[#FF6B35] mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">{plan.subscribers_count}</p>
+                <p className="text-2xl font-bold text-gray-900">{plan.subscribers_count || 0}</p>
                 <p className="text-xs text-gray-500">Alunos</p>
               </CardContent>
             </Card>
             {plan.duration_weeks > 0 && (
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4 text-center">
                   <Calendar className="w-6 h-6 text-[#FF6B35] mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900">{plan.duration_weeks}</p>
@@ -247,7 +269,7 @@ export default function PlanDetails() {
               </Card>
             )}
             {plan.workouts_per_week > 0 && (
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4 text-center">
                   <Check className="w-6 h-6 text-[#FF6B35] mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-900">{plan.workouts_per_week}x</p>
@@ -298,7 +320,7 @@ export default function PlanDetails() {
           <div className="max-w-2xl mx-auto">
             <Button
               onClick={handleSubscribe}
-              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:shadow-lg"
+              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] hover:shadow-lg transition-all"
               size="lg"
             >
               Assinar por R$ {plan.price_monthly}/mês
@@ -399,9 +421,16 @@ export default function PlanDetails() {
             <Button
               onClick={handlePayment}
               disabled={!paymentMethod || subscribeMutation.isPending}
-              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] disabled:opacity-50"
             >
-              {subscribeMutation.isPending ? "Processando..." : "Confirmar Pagamento"}
+              {subscribeMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processando...
+                </div>
+              ) : (
+                "Confirmar Pagamento"
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -450,7 +479,7 @@ export default function PlanDetails() {
                 setShowPixInstructions(false);
                 navigate(createPageUrl("MySubscriptions"));
               }}
-              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E]"
+              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063]"
             >
               Entendi, voltar para Assinaturas
             </Button>
