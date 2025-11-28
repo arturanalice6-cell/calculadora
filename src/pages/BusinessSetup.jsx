@@ -2,33 +2,30 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Award, DollarSign, Users, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { useMutation } from "@tanstack/react-query";
 
-const SEGMENTS = [
-  "Academia",
-  "Loja de Suplementos",
-  "Roupas Esportivas",
-  "Personal Trainer",
-  "Nutricionista",
-  "Outro"
+const SPECIALTIES = [
+  "Musculação",
+  "Emagrecimento",
+  "Hipertrofia",
+  "Funcional",
+  "Yoga",
+  "Pilates",
+  "Crossfit",
+  "Personal Trainer"
 ];
 
-export default function BusinessSetup() {
+export default function BecomeInstructor() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
-  const [businessName, setBusinessName] = useState("");
-  const [cnpj, setCnpj] = useState("");
-  const [segment, setSegment] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [website, setWebsite] = useState("");
+  const [cref, setCref] = useState("");
+  const [selectedSpecialties, setSelectedSpecialties] = useState([]);
+  const [bio, setBio] = useState("");
 
   useEffect(() => {
     const getUser = async () => {
@@ -40,7 +37,9 @@ export default function BusinessSetup() {
             .select('*')
             .eq('id', user.id)
             .single();
+          
           setCurrentUser(profile);
+          if (profile?.bio) setBio(profile.bio);
         }
       } catch (error) {
         console.log("User not logged in");
@@ -49,67 +48,49 @@ export default function BusinessSetup() {
     getUser();
   }, []);
 
-  const createBusinessMutation = useMutation({
+  const becomeInstructorMutation = useMutation({
     mutationFn: async (data) => {
-      const freePeriodEnds = new Date();
-      freePeriodEnds.setMonth(freePeriodEnds.getMonth() + 3);
-
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { error: businessError } = await supabase
-        .from('business_profiles')
-        .insert({
-          user_id: user.id,
-          user_email: user.email,
-          business_name: data.business_name,
-          cnpj: data.cnpj,
-          segment: data.segment,
-          phone: data.phone,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          website: data.website,
-          free_period_ends: freePeriodEnds.toISOString().split('T')[0],
-          submitted_at: new Date().toISOString(),
-          verification_status: 'pending',
-          verified: false
-        });
-
-      if (businessError) throw businessError;
-
-      const { error: profileError } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
-          account_type: 'comercial',
+          account_type: 'instrutor',
+          cref: data.cref,
+          specialties: data.specialties,
+          bio: data.bio,
+          is_verified: false,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
-      if (profileError) throw profileError;
+      if (error) throw error;
     },
     onSuccess: () => {
-      alert("Cadastro enviado! Nossa equipe irá verificar suas informações em até 48 horas. Você receberá um email com o resultado.");
       navigate(createPageUrl("Profile"));
     }
   });
 
+  const handleToggleSpecialty = (specialty) => {
+    if (selectedSpecialties.includes(specialty)) {
+      setSelectedSpecialties(selectedSpecialties.filter(s => s !== specialty));
+    } else {
+      setSelectedSpecialties([...selectedSpecialties, specialty]);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!businessName || !cnpj || !segment || !phone || !address || !city) {
-      alert("Preencha os campos obrigatórios!");
+    if (!cref || selectedSpecialties.length === 0) {
+      alert("Preencha todos os campos obrigatórios!");
       return;
     }
 
-    createBusinessMutation.mutate({
-      business_name: businessName,
-      cnpj,
-      segment,
-      phone,
-      address,
-      city,
-      state,
-      website
+    becomeInstructorMutation.mutate({
+      cref,
+      specialties: selectedSpecialties,
+      bio
     });
   };
 
@@ -124,158 +105,118 @@ export default function BusinessSetup() {
             <ArrowLeft className="w-6 h-6 text-gray-700" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">Configurar Perfil Comercial</h1>
-            <p className="text-sm text-gray-500">Anuncie após verificação</p>
+            <h1 className="text-lg font-semibold text-gray-900">Tornar-se Instrutor</h1>
+            <p className="text-sm text-gray-500">Venda treinos e ganhe dinheiro</p>
           </div>
         </div>
       </header>
 
       <div className="p-4 pb-24">
         <div className="bg-gradient-to-br from-[#FF6B35] to-[#FF006E] rounded-2xl p-6 text-white mb-6">
-          <h2 className="text-xl font-bold mb-3">Benefícios do Perfil Comercial</h2>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-start gap-2">
-              <span>✓</span>
-              <span>Anúncios verificados nos stories dos usuários</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>✓</span>
-              <span>Badge de verificação comercial após aprovação</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>✓</span>
-              <span>Estatísticas de visualizações e cliques</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>✓</span>
-              <span>3 meses grátis após verificação</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>✓</span>
-              <span>Verificação manual pela nossa equipe (até 48h)</span>
-            </li>
-          </ul>
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-blue-900">
-            <strong>Importante:</strong> Todos os perfis comerciais passam por verificação manual. 
-            Certifique-se de fornecer informações verdadeiras e atualizadas. Anúncios só poderão 
-            ser criados após a aprovação.
-          </p>
+          <h2 className="text-xl font-bold mb-4">Benefícios do Instrutor</h2>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <DollarSign className="w-5 h-5 mt-0.5" />
+              <div>
+                <p className="font-semibold">Monetize seu conhecimento</p>
+                <p className="text-sm opacity-90">Crie planos pagos de R$ 50 a R$ 200/mês</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Users className="w-5 h-5 mt-0.5" />
+              <div>
+                <p className="font-semibold">Acompanhe seus alunos</p>
+                <p className="text-sm opacity-90">Chat exclusivo e envio de treinos</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Award className="w-5 h-5 mt-0.5" />
+              <div>
+                <p className="font-semibold">Selo de verificação</p>
+                <p className="text-sm opacity-90">Badge azul de instrutor verificado</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 mt-0.5" />
+              <div>
+                <p className="font-semibold">Comissão de apenas 15%</p>
+                <p className="text-sm opacity-90">Você fica com 85% do valor dos planos</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              Nome da Empresa *
+              CREF (Número de Registro) *
             </label>
             <Input
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="Ex: Academia FitZone"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              CNPJ *
-            </label>
-            <Input
-              value={cnpj}
-              onChange={(e) => setCnpj(e.target.value)}
-              placeholder="00.000.000/0000-00"
+              value={cref}
+              onChange={(e) => setCref(e.target.value)}
+              placeholder="000000-G/SP"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Será verificado pela nossa equipe
+              Necessário para verificação profissional
             </p>
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              Segmento *
+            <label className="text-sm font-semibold text-gray-700 mb-3 block">
+              Especialidades * (selecione ao menos 1)
             </label>
-            <Select value={segment} onValueChange={setSegment} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o segmento" />
-              </SelectTrigger>
-              <SelectContent>
-                {SEGMENTS.map((seg) => (
-                  <SelectItem key={seg} value={seg}>{seg}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              Telefone *
-            </label>
-            <Input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="(00) 00000-0000"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Cidade *
-              </label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="São Paulo"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                Estado (UF)
-              </label>
-              <Input
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                placeholder="SP"
-                maxLength={2}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              {SPECIALTIES.map((specialty) => (
+                <div
+                  key={specialty}
+                  onClick={() => handleToggleSpecialty(specialty)}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedSpecialties.includes(specialty)
+                      ? 'border-[#FF6B35] bg-orange-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedSpecialties.includes(specialty)}
+                      className="pointer-events-none"
+                    />
+                    <span className="text-sm font-medium text-gray-900">
+                      {specialty}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              Endereço Completo *
+              Sobre Você
             </label>
             <Textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Rua, número, bairro, CEP..."
-              className="min-h-[80px]"
-              required
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Conte sobre sua experiência, formação e metodologia de treino..."
+              className="min-h-[120px]"
             />
           </div>
 
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">
-              Website/Instagram
-            </label>
-            <Input
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://..."
-            />
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-blue-900">
+              <strong>Processo de verificação:</strong> Após enviar, nossa equipe 
+              irá revisar seu cadastro em até 48 horas. Você receberá um email 
+              com o resultado da análise.
+            </p>
           </div>
 
           <Button
             type="submit"
-            disabled={createBusinessMutation.isPending}
+            disabled={becomeInstructorMutation.isPending}
             className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:shadow-lg"
           >
-            {createBusinessMutation.isPending ? "Enviando..." : "Enviar para Verificação"}
+            {becomeInstructorMutation.isPending ? "Enviando..." : "Solicitar Verificação"}
           </Button>
         </form>
       </div>
