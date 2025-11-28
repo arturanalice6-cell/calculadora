@@ -3,10 +3,10 @@ import { supabase } from "@/api/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Camera, Plus, Trash2, Award, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const CATEGORIES = ["Musculação", "Cardio", "Yoga", "Crossfit", "Corrida", "Funcional"];
@@ -76,74 +76,77 @@ export default function LogWorkout() {
   };
 
   const checkAndUnlockAchievements = async (userEmail) => {
-    const { data: logs } = await supabase
-      .from('workout_logs')
-      .select('*')
-      .eq('user_email', userEmail);
+    try {
+      const { data: logs } = await supabase
+        .from('workout_logs')
+        .select('*')
+        .eq('user_email', userEmail);
 
-    const { data: achievements } = await supabase
-      .from('achievements')
-      .select('*')
-      .eq('user_email', userEmail);
-
-    if (logs?.length === 1 && achievements?.length === 0) {
-      await supabase
+      const { data: achievements } = await supabase
         .from('achievements')
-        .insert({
-          user_email: userEmail,
-          type: "medal",
-          title: "Primeira Jornada",
-          description: "Complete seu primeiro treino",
-          icon: "🏅",
-          rarity: "Bronze",
-          points: 10,
-          unlocked_at: new Date().toISOString()
+        .select('*')
+        .eq('user_email', userEmail);
+
+      // First workout achievement
+      if (logs?.length === 1 && !achievements?.some(a => a.title === "Primeira Jornada")) {
+        await supabase
+          .from('achievements')
+          .insert({
+            user_email: userEmail,
+            type: "medal",
+            title: "Primeira Jornada",
+            description: "Complete seu primeiro treino",
+            icon: "🏅",
+            rarity: "Bronze",
+            points: 10,
+            unlocked_at: new Date().toISOString()
+          });
+      }
+
+      // 10 workouts achievement
+      if (logs?.length === 10 && !achievements?.some(a => a.title === "Dedicação")) {
+        await supabase
+          .from('achievements')
+          .insert({
+            user_email: userEmail,
+            type: "trophy",
+            title: "Dedicação",
+            description: "Complete 10 treinos",
+            icon: "🏆",
+            rarity: "Prata",
+            points: 50,
+            unlocked_at: new Date().toISOString()
+          });
+      }
+
+      // 50 workouts achievement
+      if (logs?.length === 50 && !achievements?.some(a => a.title === "Guerreiro Fitness")) {
+        await supabase
+          .from('achievements')
+          .insert({
+            user_email: userEmail,
+            type: "trophy",
+            title: "Guerreiro Fitness",
+            description: "Complete 50 treinos",
+            icon: "👑",
+            rarity: "Ouro",
+            points: 200,
+            unlocked_at: new Date().toISOString()
+          });
+      }
+
+      // 7-day streak achievement
+      const last7Days = logs?.slice(-7);
+      if (last7Days?.length === 7) {
+        const hasStreak = last7Days.every((log, index) => {
+          if (index === 0) return true;
+          const prevDate = new Date(last7Days[index - 1].created_date);
+          const currDate = new Date(log.created_date);
+          const diffDays = Math.floor((currDate - prevDate) / (1000 * 60 * 60 * 24));
+          return diffDays === 1;
         });
-    }
 
-    if (logs?.length === 10) {
-      await supabase
-        .from('achievements')
-        .insert({
-          user_email: userEmail,
-          type: "trophy",
-          title: "Dedicação",
-          description: "Complete 10 treinos",
-          icon: "🏆",
-          rarity: "Prata",
-          points: 50,
-          unlocked_at: new Date().toISOString()
-        });
-    }
-
-    if (logs?.length === 50) {
-      await supabase
-        .from('achievements')
-        .insert({
-          user_email: userEmail,
-          type: "trophy",
-          title: "Guerreiro Fitness",
-          description: "Complete 50 treinos",
-          icon: "👑",
-          rarity: "Ouro",
-          points: 200,
-          unlocked_at: new Date().toISOString()
-        });
-    }
-
-    const last7Days = logs?.slice(-7);
-    if (last7Days?.length === 7) {
-      const hasStreak = last7Days.every((log, index) => {
-        if (index === 0) return true;
-        const prevDate = new Date(last7Days[index - 1].created_date);
-        const currDate = new Date(log.created_date);
-        const diffDays = Math.floor((currDate - prevDate) / (1000 * 60 * 60 * 24));
-        return diffDays === 1;
-      });
-
-      if (hasStreak) {
-        const hasStreakAchievement = achievements?.some(a => a.title === "Sequência de Fogo");
-        if (!hasStreakAchievement) {
+        if (hasStreak && !achievements?.some(a => a.title === "Sequência de Fogo")) {
           await supabase
             .from('achievements')
             .insert({
@@ -158,6 +161,8 @@ export default function LogWorkout() {
             });
         }
       }
+    } catch (error) {
+      console.error("Error checking achievements:", error);
     }
   };
 
@@ -171,9 +176,13 @@ export default function LogWorkout() {
       await checkAndUnlockAchievements(data.user_email);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['workoutLogs']);
-      queryClient.invalidateQueries(['achievements']);
+      queryClient.invalidateQueries({ queryKey: ['workoutLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['achievements'] });
       navigate(createPageUrl("WorkoutHistory"));
+    },
+    onError: (error) => {
+      console.error("Error logging workout:", error);
+      alert("Erro ao registrar treino. Tente novamente.");
     }
   });
 
@@ -182,6 +191,11 @@ export default function LogWorkout() {
     
     if (!title || !duration || !category) {
       alert("Preencha os campos obrigatórios!");
+      return;
+    }
+
+    if (!currentUser?.email) {
+      alert("Usuário não autenticado!");
       return;
     }
 
@@ -270,6 +284,7 @@ export default function LogWorkout() {
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="60"
+                min="1"
                 required
               />
             </div>
@@ -307,7 +322,7 @@ export default function LogWorkout() {
                 <button
                   type="button"
                   onClick={() => setProofPhoto("")}
-                  className="absolute top-2 right-2 p-2 bg-red-500 rounded-full hover:bg-red-600"
+                  className="absolute top-2 right-2 p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
                 >
                   <Trash2 className="w-4 h-4 text-white" />
                 </button>
@@ -379,7 +394,7 @@ export default function LogWorkout() {
               <button
                 type="button"
                 onClick={addExercise}
-                className="flex items-center gap-1 text-sm text-[#FF6B35] font-semibold"
+                className="flex items-center gap-1 text-sm text-[#FF6B35] font-semibold hover:text-[#E55A2B] transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Adicionar
@@ -398,7 +413,7 @@ export default function LogWorkout() {
                     <button
                       type="button"
                       onClick={() => removeExercise(idx)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -407,20 +422,23 @@ export default function LogWorkout() {
                     <Input
                       type="number"
                       value={exercise.sets}
-                      onChange={(e) => updateExercise(idx, 'sets', parseInt(e.target.value))}
+                      onChange={(e) => updateExercise(idx, 'sets', parseInt(e.target.value) || 0)}
                       placeholder="Séries"
+                      min="1"
                     />
                     <Input
                       type="number"
                       value={exercise.reps}
-                      onChange={(e) => updateExercise(idx, 'reps', parseInt(e.target.value))}
+                      onChange={(e) => updateExercise(idx, 'reps', parseInt(e.target.value) || 0)}
                       placeholder="Reps"
+                      min="1"
                     />
                     <Input
                       type="number"
                       value={exercise.weight}
-                      onChange={(e) => updateExercise(idx, 'weight', parseInt(e.target.value))}
+                      onChange={(e) => updateExercise(idx, 'weight', parseInt(e.target.value) || 0)}
                       placeholder="Kg"
+                      min="0"
                     />
                   </div>
                 </div>
@@ -442,10 +460,17 @@ export default function LogWorkout() {
 
           <Button
             type="submit"
-            disabled={logWorkoutMutation.isPending}
-            className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:shadow-lg"
+            disabled={logWorkoutMutation.isPending || !title || !duration || !category}
+            className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FF006E] hover:from-[#FF5A25] hover:to-[#E50063] hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {logWorkoutMutation.isPending ? "Salvando..." : "Registrar Treino"}
+            {logWorkoutMutation.isPending ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Salvando...
+              </div>
+            ) : (
+              "Registrar Treino"
+            )}
           </Button>
         </form>
       </div>
