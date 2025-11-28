@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, Send, Paperclip } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/Button"; // ✅ CORRIGIDO
+import { Input } from "@/components/ui/Input"; // ✅ CORRIGIDO
+import { ScrollArea } from "@/components/ui/ScrollArea"; // ✅ CORRIGIDO
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
