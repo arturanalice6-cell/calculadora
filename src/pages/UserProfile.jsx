@@ -4,8 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MoreVertical, Check, Grid, Award } from "lucide-react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/Button"; // ✅ CORRIGIDO
+import { Badge } from "@/components/ui/Badge"; // ✅ CORRIGIDO
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -400,4 +400,3 @@ export default function UserProfile() {
     </div>
   );
 }
-
