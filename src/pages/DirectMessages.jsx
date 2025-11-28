@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search, MessageCircle, Send } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 
 export default function DirectMessages() {
   const navigate = useNavigate();
