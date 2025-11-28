@@ -4,9 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ArrowLeft, TrendingUp, Users, DollarSign, Calendar, BarChart3, Award } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from "recharts";
 
 const COLORS = ['#FF6B35', '#FF006E', '#00D9FF', '#FFD700'];
 
@@ -248,14 +261,18 @@ export default function InstructorAnalytics() {
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-600">Alunos Ativos (últimos 7 dias)</span>
                       <span className="font-semibold">
-                        {Math.round((new Set(studentLogs.map(l => l.user_email)).size / activeStudents) * 100)}%
+                        {activeStudents > 0 
+                          ? Math.round((new Set(studentLogs.map(l => l.user_email)).size / activeStudents) * 100)
+                          : 0}%
                       </span>
                     </div>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-blue-500 to-cyan-500" 
                         style={{ 
-                          width: `${Math.round((new Set(studentLogs.map(l => l.user_email)).size / activeStudents) * 100)}%` 
+                          width: `${activeStudents > 0 
+                            ? Math.round((new Set(studentLogs.map(l => l.user_email)).size / activeStudents) * 100) 
+                            : 0}%` 
                         }} 
                       />
                     </div>
