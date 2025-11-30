@@ -1,0 +1,21 @@
+{
+  "packageId": "com.fitswap.app",
+  "host": "YOUR_DEPLOYED_WEB_APP_URL",
+  "name": "FitSwap",
+  "launcherName": "FitSwap",
+  "shortName": "FitSwap",
+  "display": "standalone",
+  "themeColor": "#2563eb",
+  "navigationColor": "#ffffff",
+  "backgroundColor": "#ffffff",
+  "icons": [
+    {
+      "src": "public/icon-192x192.png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "public/icon-512x512.png",
+      "sizes": "512x512"
+    }
+  ]
+}
